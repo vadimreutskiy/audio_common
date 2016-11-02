@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 #***********************************************************
 #* Software License Agreement (BSD License)
@@ -59,7 +59,7 @@ Error opening pygst. Is gstreamer installed?
 **************************************************************
 """
     rospy.logfatal(str)
-    print str
+    print(str)
     exit(1)
 
 def sleep(t):
@@ -163,7 +163,7 @@ class soundtype:
         try:
             position = self.sound.query_position(Gst.Format.TIME)[0]
             duration = self.sound.query_duration(Gst.Format.TIME)[0]
-        except Exception, e:
+        except Exception as e:
             position = 0
             duration = 0
         finally:
@@ -217,7 +217,7 @@ class soundplay:
                     rospy.logdebug('command for cached wave: "%s"'%absfilename)
                 sound = self.filesounds[absfilename]
         elif data.sound == SoundRequest.SAY:
-            print data
+            print(data)
             if not data.arg in self.voicesounds.keys() or self.voicesounds[data.arg].volume != data.volume:
                 rospy.logdebug('command for uncached text: "%s"' % data.arg)
                 txtfile = tempfile.NamedTemporaryFile(prefix='sound_play', suffix='.txt')
@@ -226,7 +226,7 @@ class soundplay:
                 os.close(wavfile)
                 voice = data.arg2
                 try:
-                    txtfile.write(data.arg)
+                    txtfile.write(bytes(data.arg, "UTF-8"))
                     txtfile.flush()
                     os.system("text2wave -eval '("+voice+")' "+txtfilename+" -o "+wavfilename)
                     try:
@@ -272,8 +272,8 @@ class soundplay:
             else:
                 sound = self.select_sound(data)
                 sound.command(data.command)
-        except Exception, e:
-            rospy.logerr('Exception in callback: %s'%str(e))
+        except Exception as e:
+            rospy.logerr('Exception in callback: {0}'.format(e))
             rospy.loginfo(traceback.format_exc())
         finally:
             self.mutex.release()
@@ -285,8 +285,8 @@ class soundplay:
         for (key,sound) in dict.iteritems():
             try:
                 staleness = sound.get_staleness()
-            except Exception, e:
-                rospy.logerr('Exception in cleanupdict for sound (%s): %s'%(str(key),str(e)))
+            except Exception as e:
+                rospy.logerr('Exception in cleanupdict for sound ({0}): {1}'.format(key, e))
                 staleness = 100 # Something is wrong. Let's purge and try again.
             #print "%s %i"%(key, staleness)
             if staleness >= 10:
@@ -317,7 +317,7 @@ class soundplay:
             ds.name = rospy.get_caller_id().lstrip('/') + ": Node State"
             if state == 0:
                 ds.level = DiagnosticStatus.OK
-                ds.message = "%i sounds playing"%self.active_sounds
+                ds.message = "{0} sounds playing".format(self.active_sounds)
                 ds.values.append(KeyValue("Active sounds", str(self.active_sounds)))
                 ds.values.append(KeyValue("Allocated sound channels", str(self.num_channels)))
                 ds.values.append(KeyValue("Buffered builtin sounds", str(len(self.builtinsounds))))
@@ -332,8 +332,8 @@ class soundplay:
             da.status.append(ds)
             da.header.stamp = rospy.get_rostime()
             self.diagnostic_pub.publish(da)
-        except Exception, e:
-            rospy.loginfo('Exception in diagnostics: %s'%str(e))
+        except Exception as e:
+            rospy.loginfo('Exception in diagnostics: {0}'.format(e))
 
     def execute_cb(self, data):
         data = data.sound_request
@@ -372,8 +372,8 @@ class soundplay:
                     rospy.loginfo('sound_play action: Succeeded')
                     self._as.set_succeeded(self._result)
 
-        except Exception, e:
-            rospy.logerr('Exception in actionlib callback: %s'%str(e))
+        except Exception as e:
+            rospy.logerr('Exception in actionlib callback: {0}'.format(e))
             rospy.loginfo(traceback.format_exc())
         finally:
             self.mutex.release()
